@@ -2,7 +2,6 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
 from PyPDF2 import PdfFileMerger
-from PyPDF2 import PdfFileWriter, PdfFileReader
 import os
 
 
@@ -81,10 +80,8 @@ class Merge():
         self.ui.disable(self.ui.workFrm)
         try:
             merger = PdfFileMerger()
-            i = 0
-            for pdf in self.ui.fileList.get(0, END):
+            for i, pdf in enumerate(self.ui.fileList.get(0, END), 1):
                 merger.append(pdf)
-                i += 1
                 self.ui.progress(100*i/self.ui.fileList.size())
         except:
             messagebox.showerror('错误', '合并失败 pdf文件可能无效')

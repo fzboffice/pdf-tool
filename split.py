@@ -1,10 +1,10 @@
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
-from PyPDF2 import PdfFileMerger
 from PyPDF2 import PdfFileWriter, PdfFileReader
 import os
 import math
+
 
 def isDigit(x):
     try:
@@ -12,6 +12,7 @@ def isDigit(x):
         return isinstance(x, int)
     except ValueError:
         return False
+
 
 class Split():
     def __init__(self, ui):
@@ -28,17 +29,26 @@ class Split():
             Frame1, text='选择文件', command=self.fileSelBtnEvent)
         self.ui.fileBtnSel.pack(side='top')
         # 单选框
-        self.ui.v = IntVar()
-        self.ui.v.set(0)
-        r1 = Radiobutton(Frame1, text="指定每个文档页数", variable=self.ui.v,
+        self.ui.splitV = IntVar()
+        self.ui.splitV.set(1)
+        r1 = Radiobutton(Frame1, text="指定每个文档页数", variable=self.ui.splitV,
                          value=1, command=self.mode1)
         r1.pack(side='left', expand='yes', pady=20)
-        Radiobutton(Frame1, text="指定生成文档个数", variable=self.ui.v,
+        Radiobutton(Frame1, text="指定生成文档个数", variable=self.ui.splitV,
                     value=2, command=self.mode2).pack(side='left', expand='yes', pady=20)
-        Radiobutton(Frame1, text="自定义生成文档", variable=self.ui.v,
+        Radiobutton(Frame1, text="自定义生成文档", variable=self.ui.splitV,
                     value=3, command=self.mode3).pack(side='left', expand='yes', pady=20)
-        r1.select()
+        Radiobutton(Frame1, text="指定间隔页码数", variable=self.ui.splitV,
+                    value=4, command=self.mode4).pack(side='left', expand='yes', pady=20)
         r1.invoke()
+
+    # 选择文件按钮
+    def fileSelBtnEvent(self):
+        filename = filedialog.askopenfilenames(
+            filetypes=[('PDF file', '*.pdf')], multiple=False)
+        if len(filename) == 0:
+            return
+        self.ui.sel_fileLabel.config(text=filename[0])
 
     # 模式1
     def mode1(self):
@@ -51,7 +61,7 @@ class Split():
         Label(self.ui.Frame2, text='页成为一个文档').pack(side='top')
         Button(self.ui.Frame2, text='执行分割',
                command=self.mode1ExeBtnEvent).pack(side='top')
-    
+
     # 模式2
     def mode2(self):
         for widget in self.ui.Frame2.winfo_children():
@@ -63,7 +73,7 @@ class Split():
         Label(self.ui.Frame2, text='个文档').pack(side='top')
         Button(self.ui.Frame2, text='执行分割',
                command=self.mode2ExeBtnEvent).pack(side='top')
-    
+
     # 模式3
     def mode3(self):
         for widget in self.ui.Frame2.winfo_children():
@@ -75,14 +85,20 @@ class Split():
         Label(self.ui.Frame2, text='举例 "1,2-4,5,7-10"').pack(side='top')
         Button(self.ui.Frame2, text='执行分割',
                command=self.mode3ExeBtnEvent).pack(side='top')
-    
-    # 选择文件按钮
-    def fileSelBtnEvent(self):
-        filename = filedialog.askopenfilenames(
-            filetypes=[('PDF file', '*.pdf')], multiple=False)
-        if len(filename) == 0:
-            return
-        self.ui.sel_fileLabel.config(text=filename[0])
+
+    # 模式4
+    def mode4(self):
+        for widget in self.ui.Frame2.winfo_children():
+            widget.destroy()
+        # label
+        Label(self.ui.Frame2, text='请输入开始的页码数').pack(side='top')
+        self.mode4_entry = Entry(self.ui.Frame2, justify='center')
+        self.mode4_entry.pack(side='top')
+        Label(self.ui.Frame2, text='请输入间隔的页码数').pack(side='top')
+        self.mode4_entry2 = Entry(self.ui.Frame2, justify='center')
+        self.mode4_entry2.pack(side='top')
+        Button(self.ui.Frame2, text='执行分割',
+               command=self.mode4ExeBtnEvent).pack(side='top')
 
     # 模式1执行按钮
     def mode1ExeBtnEvent(self):
@@ -119,18 +135,15 @@ class Split():
         i = 0
         while i < pdf_num:
             pdf_output = PdfFileWriter()
-            j = 0
-            while j < step:
+            for j in range(step):
                 pdf_output.addPage(pdf_input.getPage(i))
                 i += 1
-                j += 1
                 if(i == pdf_num):
                     break
-            out_stream = open(dfile_path+'\\' + os.path.splitext(
-                os.path.basename(sfile_path))[0]+'_splite_' + str(math.ceil(i/step)) + '.pdf', 'wb')
-            pdf_output.write(out_stream)
+            with open(dfile_path+'\\' + os.path.splitext(
+                    os.path.basename(sfile_path))[0]+'_split_' + str(math.ceil(i/step)) + '.pdf', 'wb') as f:
+                pdf_output.write(f)
             self.ui.progress(100*i/pdf_num)
-
         messagebox.showinfo('提示', '拆分已完成')
         self.ui.progress(0)
         self.ui.enable(self.ui.selFrm)
@@ -151,7 +164,7 @@ class Split():
         if file_num <= 1:
             messagebox.showerror('错误', '分割失败 输入大于1的数字')
             return
-        
+
         pdf_num = pdf_input.getNumPages()
         if pdf_num <= 0:
             messagebox.showerror('错误', '分割失败 pdf文件不正确')
@@ -176,27 +189,21 @@ class Split():
             quot = Quot_left
         else:
             quot = Quot_right
-        i = 0
         j = 0
-        while i < file_num:
+        for i in range(file_num):
             pdf_output = PdfFileWriter()
-            k = 0
             if i == file_num-1:
                 left_page_num = pdf_num-j
-                while k < left_page_num:
+                for k in range(left_page_num):
                     pdf_output.addPage(pdf_input.getPage(j))
                     j += 1
-                    k += 1
             else:
-                while k < quot:
+                for k in range(quot):
                     pdf_output.addPage(pdf_input.getPage(j))
                     j += 1
-                    k += 1
-            i += 1
-            out_stream = open(dfile_path+'\\' + os.path.splitext(
-                os.path.basename(sfile_path))[0]+'_splite_' + str(i) + '.pdf', 'wb')
-            pdf_output.write(out_stream)
-            self.ui.progress(100*i/file_num)
+            with open(dfile_path+'\\' + os.path.splitext(os.path.basename(sfile_path))[0]+'_split_' + str(i) + '.pdf', 'wb') as f:
+                pdf_output.write(f)
+            self.ui.progress(100*(i+1)/file_num)
         messagebox.showinfo('提示', '拆分已完成')
         self.ui.progress(0)
         self.ui.enable(self.ui.selFrm)
@@ -243,26 +250,75 @@ class Split():
             self.ui.enable(self.ui.selFrm)
             self.ui.enable(self.ui.workFrm)
             return
-        j = 0
-        for index in fstr:
+        for n, index in enumerate(fstr, 1):
+            pdf_output = PdfFileWriter()
             if isDigit(index):
-                pdf_output = PdfFileWriter()
                 pdf_output.addPage(pdf_input.getPage(int(index)-1))
-                out_stream = open(dfile_path+'\\' + os.path.splitext(
-                    os.path.basename(sfile_path))[0]+'_splite_' + index + '.pdf', 'wb')
-                pdf_output.write(out_stream)
             else:
                 fstr2 = index.split('-')
-                i = 0
-                pdf_output = PdfFileWriter()
-                while i < int(fstr2[1])-int(fstr2[0])+1:
+                for i in range(int(fstr2[1])-int(fstr2[0])+1):
                     pdf_output.addPage(pdf_input.getPage(int(fstr2[0])+i-1))
-                    i += 1
-                out_stream = open(dfile_path+'\\' + os.path.splitext(
-                    os.path.basename(sfile_path))[0]+'_splite_' + index + '.pdf', 'wb')
-                pdf_output.write(out_stream)
-            j += 1
-            self.ui.progress(100*j/len(fstr))
+            with open(dfile_path+'\\' + os.path.splitext(
+                    os.path.basename(sfile_path))[0]+'_split_' + index + '.pdf', 'wb') as f:
+                pdf_output.write(f)
+            self.ui.progress(100*n/len(fstr))
+        messagebox.showinfo('提示', '拆分已完成')
+        self.ui.progress(0)
+        self.ui.enable(self.ui.selFrm)
+        self.ui.enable(self.ui.workFrm)
+
+    # 模式4执行按钮
+    def mode4ExeBtnEvent(self):
+        sfile_path = self.ui.sel_fileLabel.cget('text')
+        try:
+            pdf_input = PdfFileReader(sfile_path)
+        except:
+            messagebox.showerror('错误', '分割失败 请正确选择要分割的文件')
+            return
+        pdf_num = pdf_input.getNumPages()
+        if pdf_num <= 0:
+            messagebox.showerror('错误', '分割失败 pdf文件不正确')
+            return
+
+        if not isDigit(self.mode4_entry.get()):
+            messagebox.showerror('错误', '分割失败 开始的页码数不正确')
+            return
+        start_page = int(self.mode4_entry.get())
+
+        if start_page < 1:
+            messagebox.showerror('错误', '分割失败 开始的页码数不正确')
+            return
+
+        if pdf_num < start_page:
+            messagebox.showerror('错误', '分割失败 开始的页码数超过pdf页数')
+            return
+
+        if not isDigit(self.mode4_entry2.get()):
+            messagebox.showerror('错误', '分割失败 间隔的页码数不正确')
+            return
+
+        step_page = int(self.mode4_entry2.get())
+        if step_page < 1:
+            messagebox.showerror('错误', '分割失败 间隔的页码数不正确')
+            return
+        self.ui.disable(self.ui.selFrm)
+        self.ui.disable(self.ui.workFrm)
+        dfile_path = filedialog.askdirectory()
+        if len(dfile_path) == 0:
+            self.ui.progress(0)
+            self.ui.enable(self.ui.selFrm)
+            self.ui.enable(self.ui.workFrm)
+            return
+        for i in range(pdf_num):
+            self.ui.progress(100*(i+1)/pdf_num)
+            if i < start_page-1:
+                continue
+            if (i - (start_page-1)) % (step_page+1) != 0:
+                continue
+            pdf_output = PdfFileWriter()
+            pdf_output.addPage(pdf_input.getPage(i))
+            with open(dfile_path+'\\' + os.path.splitext(os.path.basename(sfile_path))[0]+'_split_' + str(i+1) + '.pdf', 'wb') as f:
+                pdf_output.write(f)
         messagebox.showinfo('提示', '拆分已完成')
         self.ui.progress(0)
         self.ui.enable(self.ui.selFrm)
