@@ -37,7 +37,7 @@ class Insert():
 
         self.ui.exeBtn = Button(
             Frame1, text='执行插入', command=self.exeBtnEvent)
-        self.ui.exeBtn.pack(side='top')
+        self.ui.exeBtn.pack(side='top',pady = 5)
 
     def fileSelBtnEvent(self):
         filename = filedialog.askopenfilenames(
