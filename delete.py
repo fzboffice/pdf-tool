@@ -4,6 +4,7 @@ from tkinter import messagebox
 from PyPDF2 import PdfFileWriter, PdfFileReader
 import os
 
+
 def isDigit(x):
     try:
         x = int(x)
@@ -11,9 +12,10 @@ def isDigit(x):
     except ValueError:
         return False
 
+
 class Delete():
-    def __init__(self,ui):
-        self.ui=ui
+    def __init__(self, ui):
+        self.ui = ui
         Frame1 = Frame(self.ui.workFrm)
         Frame1.pack(side='top')
         self.ui.sel_fileLabel = Label(Frame1, width=60)
@@ -21,7 +23,7 @@ class Delete():
         self.ui.fileBtnSel = Button(
             Frame1, text='选择pdf', command=self.fileSelBtnEvent)
         self.ui.fileBtnSel.pack(side='top')
-        
+
         self.ui.Label3 = Label(Frame1, text='请按照格式填写 页数或者页数-页数(逗号隔开)')
         self.ui.Label3.pack(side='top')
 
@@ -79,16 +81,16 @@ class Delete():
             self.ui.enable(self.ui.selFrm)
             self.ui.enable(self.ui.workFrm)
             return
-        
+
         del_range = []
         for index in fstr:
             if isDigit(index):
                 del_range.append(int(index))
-            else :
+            else:
                 fstr2 = index.split('-')
                 for i in fstr2:
                     if del_range.count(int(i)) == 0:
-                        del_range.append(int(i)) 
+                        del_range.append(int(i))
         del_range.sort()
         pdf_output = PdfFileWriter()
         for i in range(pdf_num):
@@ -96,8 +98,8 @@ class Delete():
                 pdf_output.addPage(pdf_input.getPage(i))
             self.ui.progress(100*(i+1)/pdf_num)
         with open(dfile_path+'\\' + os.path.splitext(
-                    os.path.basename(sfile_path))[0]+'_delete_' + self.entry.get() + '.pdf', 'wb') as f:
-                pdf_output.write(f)
+                os.path.basename(sfile_path))[0]+'_delete_' + self.entry.get() + '.pdf', 'wb') as f:
+            pdf_output.write(f)
         messagebox.showinfo('提示', '删除已完成')
         self.ui.progress(0)
         self.ui.enable(self.ui.selFrm)

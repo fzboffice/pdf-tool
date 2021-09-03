@@ -12,6 +12,7 @@ from split import Split
 from insert import Insert
 from delete import Delete
 
+
 class Application():
     def __init__(self):
         self.root = Tk()
